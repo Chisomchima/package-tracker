@@ -33,7 +33,8 @@ export default function Customer() {
           type: "success",
         });
         console.log(data, "emmited data");
-        setCurrentDriverLocation(data)
+        mapRef?.current?.panTo(data?.location);
+        setCurrentDriverLocation(data?.location)
       },
   
     );
@@ -62,7 +63,7 @@ export default function Customer() {
     try {
       await fetchPackageById(packageId);
       // mapRef?.current?.panTo(currentDriverLocation);
-      console.log(currentDriverLocation, packageDetails, 'currentdriverlocs')
+      // console.log(currentDriverLocation, packageDetails, 'currentdriverlocs')
     } catch (err) {
       console.log(err);
     }
