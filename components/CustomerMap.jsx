@@ -5,11 +5,9 @@ import {
   DirectionsRenderer,
   InfoWindow,
 } from "@react-google-maps/api";
-import io from "socket.io-client";
-const socket = io.connect("http://localhost:5000/");
 import styles from "../styles/Customer.module.css";
 
-export default function Map({ deliveryDetails, onLoad, currentLocation }) {
+export default function Map({ packageDetails, onLoad, currentDriverLocation }) {
   const center = useMemo(() => ({ lat: 9.0765, lng: 7.3986 }), []);
   const [directions, setDirections] = useState(null);
   const options = useMemo(
@@ -19,6 +17,7 @@ export default function Map({ deliveryDetails, onLoad, currentLocation }) {
     }),
     []
   );
+
   const icon = {
     url: "/food-delivery.png", // url
     scaledSize: new google.maps.Size(50, 50), // scaled size
@@ -27,14 +26,14 @@ export default function Map({ deliveryDetails, onLoad, currentLocation }) {
   };
 
   const fetchDirections = (position) => {
-    if (!deliveryDetails && !currentLocation) return;
-    console.log(deliveryDetails, "chisom");
+    if (!packageDetails && !currentDriverLocation) return;
+    // console.log(deliveryDetails, "chisom");
     const service = new google.maps.DirectionsService();
-    // console.log(packageDetails.from_location, 'packageDetails.from_location')
+
     service.route(
       {
-        origin: position,
-        destination: deliveryDetails?.package_id.to_location,
+        origin: currentDriverLocation,
+        destination: packageDetails?.to_location,
         travelMode: google.maps.TravelMode.DRIVING,
       },
       (result, status) => {
@@ -45,6 +44,7 @@ export default function Map({ deliveryDetails, onLoad, currentLocation }) {
       }
     );
   };
+
   return (
     <div className={styles.map}>
       <GoogleMap
@@ -66,12 +66,12 @@ export default function Map({ deliveryDetails, onLoad, currentLocation }) {
             }}
           />
         )}
-        {currentLocation && (
+        {currentDriverLocation && (
           <>
             <Marker
-              position={currentLocation}
+              position={currentDriverLocation}
               icon={icon}
-              onclick={fetchDirections(currentLocation)}
+              onclick={fetchDirections(currentDriverLocation)}
             />
           </>
         )}

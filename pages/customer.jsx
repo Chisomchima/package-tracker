@@ -1,57 +1,43 @@
 import styles from "../styles/Customer.module.css";
 import CustomerSideBar from "../components/SideBarCustomer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   useLoadScript,
   Marker,
   GoogleMap,
   DirectionsRenderer,
 } from "@react-google-maps/api";
-import Map from "../components/Map";
+import Map from "../components/CustomerMap";
 import axios from "axios";
 import { toast } from "react-toastify";
-// AIzaSyBMPcFbvgjAzqQ1lVrXCas8e5gv9XZjt4E
+import io from "socket.io-client";
+const socket = io.connect("https://package-tracker-j0qm.onrender.com");
 
 export default function Customer() {
   const [packageId, setPackageId] = useState("");
   const [packageDetails, setPackageDetails] = useState(null);
-  const [directions, setDirections] = useState(null);
-
+  const [currentDriverLocation, setCurrentDriverLocation] = useState(null);
+  const mapRef = useRef();
+  const onLoad = useCallback((map) => (mapRef.current = map), []);
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyBMPcFbvgjAzqQ1lVrXCas8e5gv9XZjt4E",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API,
   });
 
-  const fetchDirections = () => {
-    if (!packageDetails) return;
-    // navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
-    const service = new google.maps.DirectionsService();
-    console.log(packageDetails.from_location, 'packageDetails.from_location')
-    service.route(
-      {
-        origin: packageDetails.from_location,
-        destination: packageDetails.to_location,
-        travelMode: google.maps.TravelMode.DRIVING,
+  useEffect(() => {
+    socket.on(
+      "location_updated",
+      (data) => {
+        toast("Delivery location has been updated", {
+          hideProgressBar: false,
+          autoClose: 3000,
+          type: "success",
+        });
+        console.log(data, "emmited data");
+        setCurrentDriverLocation(data)
       },
-      (result, status) => {
-        if (status === "OK" && result) {
-          setDirections(result);
-        }
-        console.log(result, 'res')
-      }
+  
     );
-  };
-     // this is the functionality for location setting
-  // const getAddress = async (dets) => {
-  //   // const results = await getGeocode({ address: "Bala Kona Street" });
-  //   // console.log(results, "results");
-  //   const dets = await getLatLng(results[0]);
-  //   setDriverLocation(dets);
-  //   mapRef?.current?.panTo(dets);
-  //   console.log(driverLocation);
-  // };
-  // // setTimeout(() => {
-  //   getAddress();
-  // // }, 6000);
+  },[]);
 
   const fetchPackageById = async (id) => {
     try {
@@ -71,16 +57,15 @@ export default function Customer() {
     }
   };
 
-
   const handleSubmit = async (event) => {
     event.preventDefault();
-    try{
+    try {
       await fetchPackageById(packageId);
-      await fetchDirections()
-    } catch (err){
-      console.log(err)
+      // mapRef?.current?.panTo(currentDriverLocation);
+      console.log(currentDriverLocation, packageDetails, 'currentdriverlocs')
+    } catch (err) {
+      console.log(err);
     }
-  
   };
 
   return (
@@ -100,8 +85,8 @@ export default function Customer() {
           <Map
             styles={{ width: "100%" }}
             packageDetails={packageDetails}
-            directions={directions}
-            setDirections={setDirections}
+            onLoad={onLoad}
+            currentDriverLocation={currentDriverLocation}
           />
         </div>
       )}

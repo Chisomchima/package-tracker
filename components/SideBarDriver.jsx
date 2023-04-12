@@ -2,8 +2,8 @@ import styles from "../styles/Customer.module.css";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 
-import io from "socket.io-client"
-const socket = io.connect("https://package-tracker-j0qm.onrender.com")
+import io from "socket.io-client";
+const socket = io.connect("https://package-tracker-j0qm.onrender.com");
 
 export default function DriverSidebar({
   handleSubmit,
@@ -12,34 +12,45 @@ export default function DriverSidebar({
   setDeliveryDetails,
   setDeliveryId,
 }) {
- 
-const [pickedUp, setPickedUp] = useState(false)
-const [inTransit, setIntransit] = useState(false)
-const [delivered, setDelivered] = useState(false)
-const [failed, setFailed] = useState(false)
+  const [pickedUp, setPickedUp] = useState(true);
+  const [inTransit, setIntransit] = useState(true);
+  const [delivered, setDelivered] = useState(true);
+  const [failed, setFailed] = useState(true);
 
-const changeStatus= (status) => {
-    socket.emit('status_changed', {deliveryId: deliveryId, status: status})
-}
+  const changeStatus = (status) => {
+    socket.emit("status_changed", { deliveryId: deliveryId, status: status });
+  };
 
-useEffect(()=>{
-    const deliveryUpdate = () => {
-        socket.on("delivery_updated", (data)=>{
-            toast("Delivery has bean updated", {
-                hideProgressBar: false,
-                autoClose: 3000,
-                type: "success",
-              })
-              setDeliveryDetails(data)
-              console.log(data,'emmited data')
-        })
+  useEffect(() => {
+    // disable buttons by status
+    if (deliveryDetails?.status === "open") {
+      setPickedUp(false);
     }
-    deliveryUpdate()
-    return () => {
-        socket.disconnect();
-      };
-}, [])
+    if (deliveryDetails?.status === "picked-up") {
+      setIntransit(false);
+    }
+    if (deliveryDetails?.status === "in-transit") {
+      setDelivered(false);
+      setFailed(false);
+    }
 
+    // delivery update socket
+    const deliveryUpdate = () => {
+      socket.on("delivery_updated", (data) => {
+        console.log(data, "emmited data");
+        setDeliveryDetails(data);
+        toast(`Delivery has been updated to ${data.status}`, {
+          hideProgressBar: false,
+          autoClose: 3000,
+          type: "success",
+        });
+      });
+    };
+    deliveryUpdate();
+    return () => {
+      socket.disconnect();
+    };
+  }, [deliveryDetails]);
 
   return (
     <div>
@@ -72,6 +83,12 @@ useEffect(()=>{
                 </span>
               </div>
               <div>
+                <span className="text-gray">Delivery ID: </span>
+                <span className="text-gray">
+                  {deliveryDetails._id}
+                </span>
+              </div>
+              <div>
                 <div>
                   <span className="text-gray">Sender: </span>
                   <span className="text-gray">
@@ -92,6 +109,14 @@ useEffect(()=>{
                   </span>
                   <span className="text-gray">
                     {deliveryDetails.package_id.to_name}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray text-capitalize">
+                    Package ID:{" "}
+                  </span>
+                  <span className="text-gray">
+                    {deliveryDetails.package_id._id}
                   </span>
                 </div>
                 <div>
@@ -126,16 +151,36 @@ useEffect(()=>{
             </div>
           </div>
           <div className="flex-column d-flex w-50">
-            <button type="button" class="btn mb-2 btn-primary" onClick={()=> changeStatus('picked-up')}>
+            <button
+              type="button"
+              className={`btn mb-2 btn-primary ${pickedUp ? 'disable' : 'pointer'}`}
+              onClick={() => changeStatus("picked-up")}
+              disabled={pickedUp}
+            >
               Picked Up
             </button>
-            <button type="button" class="btn mb-2 btn-warning" onClick={()=> changeStatus('in-transit')}>
+            <button
+              type="button"
+              class="btn mb-2 btn-warning"
+              onClick={() => changeStatus("in-transit")}
+              disabled={inTransit}
+            >
               In Transit
             </button>
-            <button type="button" class="btn mb-2 btn-success" onClick={()=> changeStatus('delivered')}>
+            <button
+              type="button"
+              class="btn mb-2 btn-success"
+              onClick={() => changeStatus("delivered")}
+              disabled={delivered}
+            >
               Delivered
             </button>
-            <button type="button" class="btn mb-2 btn-danger" onClick={()=> changeStatus('failed')}>
+            <button
+              type="button"
+              class="btn mb-2 btn-danger"
+              onClick={() => changeStatus("failed")}
+              disabled={failed}
+            >
               Failed
             </button>
           </div>

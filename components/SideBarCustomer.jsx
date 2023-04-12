@@ -38,6 +38,12 @@ export default function CustomerSideBar({
                 </span>
               </div>
               <div>
+                <span className="text-gray">Package ID: </span>
+                <span className="text-gray">
+                  {packageDetails._id} 
+                </span>
+              </div>
+              <div>
                 <div>
                   <span className="text-gray">From: </span>
                   <span className="text-gray">
@@ -76,6 +82,12 @@ export default function CustomerSideBar({
                   <span className="text-gray">Status: </span>
                   <span className="text-gray">
                     {packageDetails.active_delivery_id?.status}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray">Delivery ID: </span>
+                  <span className="text-gray">
+                    {packageDetails.active_delivery_id?._id}
                   </span>
                 </div>
                 <div>
